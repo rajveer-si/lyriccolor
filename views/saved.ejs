@@ -7,12 +7,12 @@
         <p class="eyebrow">Discovery vault</p>
         <h1>Saved tracks</h1>
       </div>
-      <a class="saved-link" href="/">Back to discovery map</a>
+      <a class="saved-link" href="/">Back to discovery</a>
     </div>
 
     <% if (!songs.length) { %>
       <div class="message-card">
-        <p>No tracks have been saved yet. Explore the map, play previews, and save anything worth revisiting.</p>
+        <p>No tracks have been saved yet. Explore a vibe, play previews, and save anything worth revisiting.</p>
       </div>
     <% } %>
 
@@ -24,8 +24,8 @@
             <p class="song-title"><%= song.title %></p>
             <p class="song-meta"><%= song.artist %></p>
             <p class="song-meta muted"><%= song.album %></p>
-            <% if (song.discoveryGenres && song.discoveryGenres.length) { %>
-              <p class="track-source"><%= song.discoveryGenres.slice(0, 2).join(" · ") %></p>
+            <% if (song.sourceQuery) { %>
+              <p class="track-source">from: <%= song.sourceQuery %></p>
             <% } %>
           </div>
         </a>

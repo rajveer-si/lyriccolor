@@ -5,7 +5,6 @@ const mongoose = require("mongoose");
 const path = require("path");
 
 const songRoutes = require("./routes/songRoutes");
-const { genreNodes } = require("./data/genreNetwork");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,8 +23,6 @@ app.get("/favicon.ico", (req, res) => {
 app.get("/", (req, res) => {
   res.render("index", {
     pageTitle: "Home",
-    genreNodes,
-    activeGenreSlugs: [],
     starterPrompts: [
       "glossy late-night city lights",
       "messy dancefloor after 1am",

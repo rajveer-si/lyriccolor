@@ -15,14 +15,9 @@
     <div class="stage-meta">
       <p class="stage-title"><%= song.title %></p>
       <p class="stage-subtitle"><%= song.artist %> · <%= song.album %></p>
-      <% if (savedGenres.length || song.sourceQuery) { %>
+      <% if (song.sourceQuery) { %>
         <div class="stage-tags">
-          <% if (song.sourceQuery) { %>
-            <span class="stage-tag">from: <%= song.sourceQuery %></span>
-          <% } %>
-          <% savedGenres.forEach((genre) => { %>
-            <a class="stage-tag js-load-link" href="/songs/genre/<%= genre.slug %>" data-loading-message="Opening genre scene..."><%= genre.name %></a>
-          <% }) %>
+          <span class="stage-tag">from: <%= song.sourceQuery %></span>
         </div>
       <% } %>
     </div>

@@ -42,10 +42,6 @@ const songSchema = new mongoose.Schema({
     type: String,
     default: "#1e293b"
   },
-  discoveryGenres: {
-    type: [String],
-    default: []
-  },
   sourceQuery: {
     type: String,
     default: ""

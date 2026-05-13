@@ -1,15 +1,17 @@
 <%- include("partials/header", { pageTitle }) %>
 
 <section class="discovery-hero">
-  <div class="container discovery-home-shell">
-    <div class="discovery-topbar">
-      <div class="topbar-copy">
-        <p class="eyebrow">Vibe-first music discovery</p>
-        <h1>Search the mood. Let the map do the rest.</h1>
-      </div>
+  <div class="container">
+    <div class="landing-shell">
+      <p class="eyebrow">Vibe-first music discovery</p>
+      <h1 class="landing-title">Start with a mood. Find something worth replaying.</h1>
+      <p class="landing-copy">
+        Describe the sound you want and LyricColor will surface playable Deezer previews,
+        artist mixes, and tracks you can save for later.
+      </p>
 
       <form
-        class="vibe-form vibe-form-inline js-load-form"
+        class="vibe-form landing-form js-load-form"
         action="/songs/search"
         method="GET"
         data-loading-message="Mapping your vibe..."
@@ -18,34 +20,29 @@
         <textarea
           id="q"
           name="q"
-          rows="1"
+          rows="2"
           placeholder="glossy city lights, smoky soul, restless club energy..."
           required
         ></textarea>
-        <button type="submit" data-loading-label="Mapping...">Find</button>
+        <button type="submit" data-loading-label="Mapping...">Find My Sound</button>
       </form>
-    </div>
 
-    <div class="prompt-strip prompt-strip-top">
+      <div class="prompt-strip prompt-strip-top">
       <% starterPrompts.forEach((prompt) => { %>
-        <a class="prompt-pill js-load-link" href="/songs/search?q=<%= encodeURIComponent(prompt) %>" data-loading-message="Opening discovery results...">
+        <a
+          class="prompt-pill js-load-link"
+          href="/songs/search?q=<%= encodeURIComponent(prompt) %>"
+          data-loading-message="Opening discovery results..."
+        >
           <%= prompt %>
         </a>
       <% }) %>
-    </div>
-
-    <div class="network-stage network-stage-home">
-      <div class="network-stage-copy network-stage-copy-overlay">
-        <div>
-          <p class="preview-label">Genre map</p>
-          <p class="network-lead">Click any node to enter that scene or use the bar above to light up matching lanes.</p>
-        </div>
-        <div class="network-stage-meta">
-          <a class="saved-link" href="/songs/saved">Open saved tracks</a>
-          <p class="hero-note">Preview audio comes from Deezer. Saved tracks still keep Mongo-backed song pages.</p>
-        </div>
       </div>
-      <%- include("partials/genre-network", { genreNodes, activeGenreSlugs, networkVariant: 'large' }) %>
+
+      <div class="landing-footer">
+        <a class="saved-link" href="/songs/saved">Open saved tracks</a>
+        <p class="hero-note">Search by mood, scene, energy, texture, or whatever else gets you close.</p>
+      </div>
     </div>
   </div>
 </section>

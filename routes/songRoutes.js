@@ -1,7 +1,6 @@
 const express = require("express");
 
 const Song = require("../models/Song");
-const { genreNodes, getGenreBySlug } = require("../data/genreNetwork");
 
 const router = express.Router();
 
@@ -16,7 +15,6 @@ try {
 }
 
 const DEFAULT_COLOR = "#111827";
-const DEFAULT_DISCOVERY_SLUGS = ["dream-pop", "neo-soul", "uk-garage", "art-pop"];
 const STOP_WORDS = new Set([
   "a",
   "an",
@@ -75,140 +73,12 @@ function scoreLyricsMatch(result, title, artist) {
   return score;
 }
 
-function timestampToSeconds(timestamp = "") {
-  const [minutesPart, secondsPart] = timestamp.split(":");
-  const minutes = Number(minutesPart || 0);
-  const seconds = Number(secondsPart || 0);
-
-  return minutes * 60 + seconds;
-}
-
-function parseSyncedLyrics(syncedLyrics = "") {
-  return syncedLyrics
-    .split("\n")
-    .flatMap((line) => {
-      const matches = [...line.matchAll(/\[(\d{2}:\d{2}(?:\.\d{2,3})?)\]/g)];
-      const lyricText = line.replace(/\[(\d{2}:\d{2}(?:\.\d{2,3})?)\]/g, "").trim();
-
-      if (!matches.length || !lyricText) {
-        return [];
-      }
-
-      return matches.map((match) => ({
-        timestamp: match[1],
-        seconds: timestampToSeconds(match[1]),
-        text: lyricText
-      }));
-    });
-}
-
 function syncedLyricsToPlainText(syncedLyrics = "") {
   return syncedLyrics
     .split("\n")
     .map((line) => line.replace(/\[(\d{2}:\d{2}(?:\.\d{2,3})?)\]/g, "").trim())
     .filter(Boolean)
     .join("\n");
-}
-
-function scoreGenreNode(node, rawQuery = "") {
-  const normalizedQuery = normalizeText(rawQuery);
-  const queryTokens = tokenize(rawQuery);
-  const reasonSet = new Set();
-  let score = 0;
-
-  if (!normalizedQuery) {
-    return { score, reasons: [] };
-  }
-
-  const fields = [node.name, ...(node.aliases || []), ...(node.vibes || []), node.cluster, node.blurb];
-
-  for (const field of fields) {
-    const normalizedField = normalizeText(field);
-
-    if (normalizedField && normalizedQuery.includes(normalizedField)) {
-      score += field === node.name ? 10 : 6;
-      reasonSet.add(field);
-    }
-  }
-
-  for (const token of queryTokens) {
-    if (normalizeText(node.name).includes(token)) {
-      score += 4;
-      reasonSet.add(token);
-    }
-
-    if ((node.aliases || []).some((alias) => normalizeText(alias).includes(token))) {
-      score += 3;
-      reasonSet.add(token);
-    }
-
-    if ((node.vibes || []).some((vibe) => normalizeText(vibe).includes(token))) {
-      score += 2;
-      reasonSet.add(token);
-    }
-
-    if (normalizeText(node.blurb || "").includes(token)) {
-      score += 1;
-      reasonSet.add(token);
-    }
-  }
-
-  return {
-    score,
-    reasons: [...reasonSet].slice(0, 3)
-  };
-}
-
-function getDefaultGenres() {
-  return DEFAULT_DISCOVERY_SLUGS.map((slug) => getGenreBySlug(slug)).filter(Boolean);
-}
-
-function getMatchedGenres(rawQuery = "", explicitSlug = "") {
-  if (explicitSlug) {
-    const explicitGenre = getGenreBySlug(explicitSlug);
-
-    if (!explicitGenre) {
-      return [];
-    }
-
-    const relatedGenres = explicitGenre.related
-      .map((relatedSlug) => getGenreBySlug(relatedSlug))
-      .filter(Boolean)
-      .slice(0, 3);
-
-    return [
-      { ...explicitGenre, matchReasons: ["selected genre"], matchScore: 999 },
-      ...relatedGenres.map((genre) => ({
-        ...genre,
-        matchReasons: ["connected node"],
-        matchScore: 100
-      }))
-    ];
-  }
-
-  const rankedGenres = genreNodes
-    .map((node) => {
-      const { score, reasons } = scoreGenreNode(node, rawQuery);
-
-      return {
-        ...node,
-        matchScore: score,
-        matchReasons: reasons
-      };
-    })
-    .filter((node) => node.matchScore > 0)
-    .sort((a, b) => b.matchScore - a.matchScore)
-    .slice(0, 5);
-
-  if (rankedGenres.length) {
-    return rankedGenres;
-  }
-
-  return getDefaultGenres().map((genre) => ({
-    ...genre,
-    matchScore: 0,
-    matchReasons: ["editorial starter"]
-  }));
 }
 
 async function fetchLyrics(title, artist) {
@@ -309,47 +179,38 @@ async function fetchDeezerTrackById(deezerId) {
   return track;
 }
 
-async function fetchDiscoveryTracks(matchedGenres, rawQuery = "") {
-  const searchPlans = [];
+function buildSearchPlans(rawQuery = "") {
+  const trimmedQuery = rawQuery.trim();
 
-  for (const genre of matchedGenres.slice(0, 4)) {
-    for (const seedQuery of genre.seedQueries.slice(0, 2)) {
-      searchPlans.push({
-        query: seedQuery,
-        sourceGenre: genre.slug
-      });
-    }
+  if (!trimmedQuery) {
+    return [];
   }
 
-  if (!searchPlans.length && rawQuery.trim()) {
-    searchPlans.push({
-      query: rawQuery.trim(),
-      sourceGenre: ""
-    });
+  const queryTokens = tokenize(trimmedQuery);
+  const quotedQuery = `"${trimmedQuery}"`;
+  const compactTokens = queryTokens.slice(0, 4).join(" ");
+  const plans = [trimmedQuery, quotedQuery];
+
+  if (compactTokens && compactTokens !== trimmedQuery) {
+    plans.push(compactTokens);
   }
 
-  const uniquePlans = [];
-  const seenQueries = new Set();
+  return [...new Set(plans)];
+}
 
-  for (const plan of searchPlans) {
-    if (seenQueries.has(plan.query)) {
-      continue;
-    }
+async function fetchDiscoveryTracks(rawQuery = "") {
+  const searchPlans = buildSearchPlans(rawQuery);
 
-    seenQueries.add(plan.query);
-    uniquePlans.push(plan);
+  if (!searchPlans.length) {
+    return [];
   }
 
   const payloads = await Promise.all(
-    uniquePlans.slice(0, 6).map(async (plan) => {
+    searchPlans.slice(0, 3).map(async (query) => {
       try {
-        const songs = await searchDeezer(plan.query);
-        return songs.slice(0, 8).map((song) => ({
-          ...song,
-          discoverySource: plan.sourceGenre
-        }));
+        return await searchDeezer(query);
       } catch (error) {
-        console.error("Discovery search failed:", plan.query, error.message);
+        console.error("Discovery search failed:", query, error.message);
         return [];
       }
     })
@@ -359,9 +220,11 @@ async function fetchDiscoveryTracks(matchedGenres, rawQuery = "") {
 
   for (const songs of payloads) {
     for (const song of songs) {
-      if (!uniqueSongs.has(song.id)) {
-        uniqueSongs.set(song.id, song);
+      if (!song?.id || uniqueSongs.has(song.id)) {
+        continue;
       }
+
+      uniqueSongs.set(song.id, song);
     }
   }
 
@@ -371,13 +234,15 @@ async function fetchDiscoveryTracks(matchedGenres, rawQuery = "") {
     const artistKey = String(song.artist?.id || normalizeText(song.artist?.name || "unknown"));
     const bucket = songsByArtist.get(artistKey) || [];
 
-    bucket.push(song);
-    songsByArtist.set(artistKey, bucket);
+    if (bucket.length < 4) {
+      bucket.push(song);
+      songsByArtist.set(artistKey, bucket);
+    }
   }
 
-  const artistBuckets = [...songsByArtist.values()]
-    .sort((left, right) => left[0].artist.name.localeCompare(right[0].artist.name))
-    .map((bucket) => bucket.slice(0, 4));
+  const artistBuckets = [...songsByArtist.values()].sort((left, right) =>
+    left[0].artist.name.localeCompare(right[0].artist.name)
+  );
 
   const interleavedSongs = [];
 
@@ -395,7 +260,7 @@ async function fetchDiscoveryTracks(matchedGenres, rawQuery = "") {
     }
   }
 
-  return interleavedSongs.slice(0, 18);
+  return interleavedSongs;
 }
 
 function buildArtistHighlights(songs = []) {
@@ -422,26 +287,17 @@ function buildArtistHighlights(songs = []) {
     .slice(0, 8);
 }
 
-function buildActiveGenreSlugs(matchedGenres = []) {
-  return matchedGenres.map((genre) => genre.slug);
-}
-
 router.get("/search", async (req, res) => {
   const query = req.query.q?.trim() || "";
-  const matchedGenres = getMatchedGenres(query);
 
   try {
-    const songs = await fetchDiscoveryTracks(matchedGenres, query);
+    const songs = await fetchDiscoveryTracks(query);
 
     res.render("results", {
       pageTitle: query ? `Vibe results for ${query}` : "Discovery Results",
       query,
-      matchedGenres,
-      genreNodes,
-      activeGenreSlugs: buildActiveGenreSlugs(matchedGenres),
       songs,
       featuredArtists: buildArtistHighlights(songs),
-      selectedGenre: null,
       errorMessage: songs.length ? "" : "No preview-ready tracks came back for that search. Try a different mood."
     });
   } catch (error) {
@@ -449,54 +305,9 @@ router.get("/search", async (req, res) => {
     res.status(500).render("results", {
       pageTitle: "Discovery Results",
       query,
-      matchedGenres,
-      genreNodes,
-      activeGenreSlugs: buildActiveGenreSlugs(matchedGenres),
       songs: [],
       featuredArtists: [],
-      selectedGenre: null,
       errorMessage: "Discovery search is unavailable right now. Please try again."
-    });
-  }
-});
-
-router.get("/genre/:slug", async (req, res) => {
-  const selectedGenre = getGenreBySlug(req.params.slug);
-
-  if (!selectedGenre) {
-    return res.status(404).render("not-found", {
-      pageTitle: "Genre Not Found"
-    });
-  }
-
-  const matchedGenres = getMatchedGenres("", selectedGenre.slug);
-
-  try {
-    const songs = await fetchDiscoveryTracks(matchedGenres, selectedGenre.name);
-
-    res.render("results", {
-      pageTitle: `${selectedGenre.name} Discovery`,
-      query: "",
-      matchedGenres,
-      genreNodes,
-      activeGenreSlugs: buildActiveGenreSlugs(matchedGenres),
-      songs,
-      featuredArtists: buildArtistHighlights(songs),
-      selectedGenre,
-      errorMessage: songs.length ? "" : "No preview-ready tracks came back for this genre right now."
-    });
-  } catch (error) {
-    console.error("Genre discovery failed:", error.message);
-    res.status(500).render("results", {
-      pageTitle: `${selectedGenre.name} Discovery`,
-      query: "",
-      matchedGenres,
-      genreNodes,
-      activeGenreSlugs: buildActiveGenreSlugs(matchedGenres),
-      songs: [],
-      featuredArtists: [],
-      selectedGenre,
-      errorMessage: "Genre discovery is unavailable right now. Please try again."
     });
   }
 });
@@ -509,7 +320,6 @@ router.post("/save", async (req, res) => {
     albumCover = "",
     previewUrl = "",
     deezerId = "",
-    discoveryGenres = "",
     sourceQuery = ""
   } = req.body;
 
@@ -539,10 +349,6 @@ router.post("/save", async (req, res) => {
     }
 
     const backgroundColor = await extractBackgroundColor(albumCover);
-    const normalizedGenres = discoveryGenres
-      .split(",")
-      .map((genre) => genre.trim())
-      .filter(Boolean);
 
     const savedSong = await Song.create({
       title,
@@ -554,7 +360,6 @@ router.post("/save", async (req, res) => {
       plainLyrics: lyrics.plainLyrics,
       syncedLyrics: lyrics.syncedLyrics,
       backgroundColor,
-      discoveryGenres: normalizedGenres,
       sourceQuery
     });
 
@@ -614,15 +419,9 @@ router.get("/:id", async (req, res) => {
       }
     }
 
-    const savedGenres = (song.discoveryGenres || [])
-      .map((slug) => getGenreBySlug(slug))
-      .filter(Boolean);
-
     res.render("song", {
       pageTitle: `${song.title} by ${song.artist}`,
       song,
-      parsedSyncedLyrics: parseSyncedLyrics(song.syncedLyrics),
-      savedGenres,
       displayLyrics: syncedLyricsToPlainText(song.syncedLyrics) || song.plainLyrics || "",
       resolvedPreviewUrl
     });
