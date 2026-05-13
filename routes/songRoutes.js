@@ -293,6 +293,22 @@ async function searchDeezer(term) {
   });
 }
 
+async function fetchDeezerTrackById(deezerId) {
+  const response = await fetch(`https://api.deezer.com/track/${encodeURIComponent(deezerId)}`);
+
+  if (!response.ok) {
+    throw new Error(`Deezer track request failed with status ${response.status}`);
+  }
+
+  const track = await response.json();
+
+  if (!track || track.error) {
+    throw new Error("Deezer track lookup returned an error payload.");
+  }
+
+  return track;
+}
+
 async function fetchDiscoveryTracks(matchedGenres, rawQuery = "") {
   const searchPlans = [];
 
@@ -579,6 +595,25 @@ router.get("/:id", async (req, res) => {
       });
     }
 
+    let resolvedPreviewUrl = song.previewUrl || "";
+
+    if (song.deezerId) {
+      try {
+        const deezerTrack = await fetchDeezerTrackById(song.deezerId);
+
+        if (deezerTrack.preview) {
+          resolvedPreviewUrl = deezerTrack.preview;
+
+          if (resolvedPreviewUrl !== song.previewUrl) {
+            song.previewUrl = resolvedPreviewUrl;
+            await song.save();
+          }
+        }
+      } catch (deezerError) {
+        console.error("Deezer preview refresh failed:", deezerError.message);
+      }
+    }
+
     const savedGenres = (song.discoveryGenres || [])
       .map((slug) => getGenreBySlug(slug))
       .filter(Boolean);
@@ -588,7 +623,8 @@ router.get("/:id", async (req, res) => {
       song,
       parsedSyncedLyrics: parseSyncedLyrics(song.syncedLyrics),
       savedGenres,
-      displayLyrics: syncedLyricsToPlainText(song.syncedLyrics) || song.plainLyrics || ""
+      displayLyrics: syncedLyricsToPlainText(song.syncedLyrics) || song.plainLyrics || "",
+      resolvedPreviewUrl
     });
   } catch (error) {
     console.error("Song lookup failed:", error.message);
