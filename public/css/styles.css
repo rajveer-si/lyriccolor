@@ -389,7 +389,7 @@ input {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(360px, 1.1fr);
   gap: 1rem;
-  align-items: end;
+  align-items: start;
 }
 
 .topbar-copy h1 {
@@ -585,6 +585,7 @@ input {
 
 .compact-vibe-form {
   margin-top: 0;
+  align-self: start;
 }
 
 .discovery-layout {
