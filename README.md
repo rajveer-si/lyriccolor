@@ -2,8 +2,8 @@
 
 Submitted by: Rajveer Singh (rajveer)
 Group Members: Rajveer Singh (rajveer)
-App Description: LyricColor is a vibe-first music discovery app where users describe a mood, explore a curated genre network, play Deezer previews, and save tracks with MongoDB-backed detail pages.
-YouTube Video Link: https://youtu.be/upltUFED5Rw?si=SWdElKm3s0jPpiR2
+App Description: LyricColor is a vibe-first music discovery app where users describe a mood, play Deezer previews, and save tracks with MongoDB-backed detail pages.
+YouTube Video Link: https://youtu.be/-i3lrIHTkq8?si=U3WkwAE3LrI2L76f
 APIs: [Deezer API](https://developers.deezer.com/api), [LRCLIB API](https://lrclib.net/docs)
 Contact Email: rajveer@terpmail.umd.edu
 Deployed App Link: https://lyriccolor.onrender.com
@@ -11,12 +11,11 @@ AI Use: 1. ChatGPT, 2. Codex
 
 ## Overview
 
-LyricColor is built with Node.js, Express.js, MongoDB, Mongoose, EJS, and custom CSS. Users can search by vibe instead of by exact song title, move through a curated network of micro-genres, preview tracks from Deezer, and save discoveries to MongoDB. Saved track pages also include LRCLIB lyric data and album-inspired color styling.
+LyricColor is built with Node.js, Express.js, MongoDB, Mongoose, EJS, and custom CSS. Users can search by vibe instead of by exact song title, preview tracks from Deezer, and save discoveries to MongoDB. Saved track pages also include LRCLIB lyric data and album-inspired color styling.
 
 ## Features
 
 - Vibe search form on the home page.
-- Curated clickable genre network for discovery.
 - Deezer-powered track previews with album art and artist metadata.
 - MongoDB storage and retrieval for saved tracks.
 - LRCLIB synced/plain lyric data attached to saved track pages.
@@ -43,7 +42,6 @@ models/Song.js
 routes/songRoutes.js
 views/
 public/
-data/genreNetwork.js
 ```
 
 ## Installation
