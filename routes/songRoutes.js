@@ -15,7 +15,6 @@ try {
 }
 
 const DEFAULT_COLOR = "#111827";
-const GENRE_CACHE_TTL_MS = 1000 * 60 * 60 * 6;
 const STOP_WORDS = new Set([
   "a",
   "an",
@@ -40,10 +39,6 @@ const STOP_WORDS = new Set([
   "want",
   "with"
 ]);
-let genreCache = {
-  fetchedAt: 0,
-  genres: []
-};
 
 function normalizeText(value = "") {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
@@ -184,93 +179,6 @@ async function fetchDeezerTrackById(deezerId) {
   return track;
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}`);
-  }
-
-  return response.json();
-}
-
-async function fetchDeezerGenres() {
-  const now = Date.now();
-
-  if (genreCache.genres.length && now - genreCache.fetchedAt < GENRE_CACHE_TTL_MS) {
-    return genreCache.genres;
-  }
-
-  const payload = await fetchJson("https://api.deezer.com/genre");
-  const genres = Array.isArray(payload.data) ? payload.data.filter((genre) => genre.id !== 0) : [];
-
-  genreCache = {
-    genres,
-    fetchedAt: now
-  };
-
-  return genres;
-}
-
-function scoreGenreMatch(genre, rawQuery = "") {
-  const normalizedQuery = normalizeText(rawQuery);
-  const queryTokens = tokenize(rawQuery);
-  const normalizedGenre = normalizeText(genre.name || "");
-  const genreTokens = normalizedGenre.split(" ").filter(Boolean);
-  let score = 0;
-
-  if (!normalizedQuery || !normalizedGenre) {
-    return 0;
-  }
-
-  if (normalizedQuery.includes(normalizedGenre)) {
-    score += 8;
-  }
-
-  if (normalizedGenre.includes(normalizedQuery)) {
-    score += 5;
-  }
-
-  for (const token of queryTokens) {
-    if (genreTokens.includes(token)) {
-      score += 4;
-      continue;
-    }
-
-    if (normalizedGenre.includes(token)) {
-      score += 2;
-    }
-  }
-
-  return score;
-}
-
-async function resolveMatchedGenres(rawQuery = "") {
-  const genres = await fetchDeezerGenres();
-
-  return genres
-    .map((genre) => ({
-      ...genre,
-      matchScore: scoreGenreMatch(genre, rawQuery)
-    }))
-    .filter((genre) => genre.matchScore > 0)
-    .sort((left, right) => right.matchScore - left.matchScore)
-    .slice(0, 3);
-}
-
-async function fetchGenreArtists(genreId) {
-  const payload = await fetchJson(`https://api.deezer.com/genre/${encodeURIComponent(genreId)}/artists`);
-  return Array.isArray(payload.data) ? payload.data : [];
-}
-
-async function fetchArtistTopTracks(artistId, limit = 6) {
-  const payload = await fetchJson(
-    `https://api.deezer.com/artist/${encodeURIComponent(artistId)}/top?limit=${encodeURIComponent(limit)}`
-  );
-
-  return Array.isArray(payload.data) ? payload.data : [];
-}
-
 function buildSearchPlans(rawQuery = "") {
   const trimmedQuery = rawQuery.trim();
 
@@ -355,68 +263,6 @@ async function fetchDiscoveryTracks(rawQuery = "") {
   return interleavedSongs;
 }
 
-async function fetchGenreDiscoveryTracks(matchedGenres = []) {
-  const uniqueSongs = new Map();
-  const artistBuckets = [];
-
-  for (const genre of matchedGenres) {
-    let artists = [];
-
-    try {
-      artists = await fetchGenreArtists(genre.id);
-    } catch (error) {
-      console.error("Genre artist lookup failed:", genre.name, error.message);
-      continue;
-    }
-
-    for (const artist of artists.slice(0, 6)) {
-      try {
-        const tracks = await fetchArtistTopTracks(artist.id, 5);
-        const previewReadyTracks = tracks.filter((track) => track?.preview).slice(0, 3);
-
-        if (!previewReadyTracks.length) {
-          continue;
-        }
-
-        const bucket = [];
-
-        for (const track of previewReadyTracks) {
-          if (uniqueSongs.has(track.id)) {
-            continue;
-          }
-
-          uniqueSongs.set(track.id, track);
-          bucket.push(track);
-        }
-
-        if (bucket.length) {
-          artistBuckets.push(bucket);
-        }
-      } catch (error) {
-        console.error("Artist top-track lookup failed:", artist.name, error.message);
-      }
-    }
-  }
-
-  const interleavedSongs = [];
-
-  while (artistBuckets.some((bucket) => bucket.length)) {
-    for (const bucket of artistBuckets) {
-      if (!bucket.length) {
-        continue;
-      }
-
-      interleavedSongs.push(bucket.shift());
-
-      if (interleavedSongs.length === 18) {
-        return interleavedSongs;
-      }
-    }
-  }
-
-  return interleavedSongs;
-}
-
 function buildArtistHighlights(songs = []) {
   const artists = new Map();
 
@@ -445,15 +291,11 @@ router.get("/search", async (req, res) => {
   const query = req.query.q?.trim() || "";
 
   try {
-    const matchedGenres = await resolveMatchedGenres(query);
-    const genreDrivenSongs = matchedGenres.length ? await fetchGenreDiscoveryTracks(matchedGenres) : [];
-    const songs = genreDrivenSongs.length ? genreDrivenSongs : await fetchDiscoveryTracks(query);
+    const songs = await fetchDiscoveryTracks(query);
 
     res.render("results", {
       pageTitle: query ? `Vibe results for ${query}` : "Discovery Results",
       query,
-      matchedGenres,
-      usedGenreSearch: Boolean(genreDrivenSongs.length && matchedGenres.length),
       songs,
       featuredArtists: buildArtistHighlights(songs),
       errorMessage: songs.length ? "" : "No preview-ready tracks came back for that search. Try a different mood."
@@ -463,8 +305,6 @@ router.get("/search", async (req, res) => {
     res.status(500).render("results", {
       pageTitle: "Discovery Results",
       query,
-      matchedGenres: [],
-      usedGenreSearch: false,
       songs: [],
       featuredArtists: [],
       errorMessage: "Discovery search is unavailable right now. Please try again."
