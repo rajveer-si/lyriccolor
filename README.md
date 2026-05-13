@@ -3,11 +3,11 @@
 Submitted by: Rajveer Singh (rajveer)
 Group Members: Rajveer Singh (rajveer)
 App Description: LyricColor is a vibe-first music discovery app where users describe a mood, explore a curated genre network, play Deezer previews, and save tracks with MongoDB-backed detail pages.
-YouTube Video Link: YOUTUBE_LINK_HERE
+YouTube Video Link: https://youtu.be/upltUFED5Rw?si=SWdElKm3s0jPpiR2
 APIs: [Deezer API](https://developers.deezer.com/api), [LRCLIB API](https://lrclib.net/docs)
 Contact Email: rajveer@terpmail.umd.edu
-Deployed App Link: RENDER_LINK_HERE
-AI Use: 1. CLI Agent, 2. ChatGPT
+Deployed App Link: https://lyriccolor.onrender.com
+AI Use: 1. ChatGPT, 2. Codex
 
 ## Overview
 
