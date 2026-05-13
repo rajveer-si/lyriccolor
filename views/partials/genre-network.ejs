@@ -1,0 +1,41 @@
+<%
+  const renderedEdges = new Set();
+  const activeSet = new Set(activeGenreSlugs || []);
+%>
+
+<div class="genre-network-shell <%= networkVariant === 'compact' ? 'is-compact' : 'is-large' %>">
+  <div class="genre-network-frame">
+    <svg class="genre-network-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <% genreNodes.forEach((node) => { %>
+        <% node.related.forEach((relatedSlug) => { %>
+          <% const relatedNode = genreNodes.find((entry) => entry.slug === relatedSlug); %>
+          <% if (relatedNode) { %>
+            <% const edgeKey = [node.slug, relatedNode.slug].sort().join(":"); %>
+            <% if (!renderedEdges.has(edgeKey)) { renderedEdges.add(edgeKey); %>
+              <line
+                x1="<%= node.x %>%"
+                y1="<%= node.y %>%"
+                x2="<%= relatedNode.x %>%"
+                y2="<%= relatedNode.y %>%"
+                class="genre-edge <%= activeSet.has(node.slug) && activeSet.has(relatedNode.slug) ? 'is-active' : '' %>"
+              ></line>
+            <% } %>
+          <% } %>
+        <% }) %>
+      <% }) %>
+    </svg>
+
+    <div class="genre-network-nodes">
+      <% genreNodes.forEach((node) => { %>
+        <a
+          class="genre-node <%= activeSet.has(node.slug) ? 'is-active' : '' %>"
+          href="/songs/genre/<%= node.slug %>"
+          style="left: <%= node.x %>%; top: <%= node.y %>%; --node-accent: <%= node.accent %>;"
+          title="<%= node.blurb %>"
+        >
+          <span class="genre-node-name"><%= node.name %></span>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+</div>

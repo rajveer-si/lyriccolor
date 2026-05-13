@@ -1,0 +1,72 @@
+<%- include("partials/header", { pageTitle }) %>
+
+<section
+  class="section-block song-detail-page song-stage"
+  style="--album-color: <%= song.backgroundColor || '#111827' %>;"
+  data-song-player
+>
+  <div class="container song-stage-shell">
+    <a class="stage-back js-load-link" href="/songs/saved" data-loading-message="Opening saved songs...">Back</a>
+
+    <div class="stage-art">
+      <img class="stage-cover" src="<%= song.albumCover %>" alt="Album cover for <%= song.album %>" />
+    </div>
+
+    <div class="stage-meta">
+      <p class="stage-title"><%= song.title %></p>
+      <p class="stage-subtitle"><%= song.artist %> · <%= song.album %></p>
+      <% if (savedGenres.length || song.sourceQuery) { %>
+        <div class="stage-tags">
+          <% if (song.sourceQuery) { %>
+            <span class="stage-tag">from: <%= song.sourceQuery %></span>
+          <% } %>
+          <% savedGenres.forEach((genre) => { %>
+            <a class="stage-tag js-load-link" href="/songs/genre/<%= genre.slug %>" data-loading-message="Opening genre scene..."><%= genre.name %></a>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+
+    <% if (song.previewUrl) { %>
+      <div class="stage-player stage-player-top" data-player-ui>
+        <audio preload="none" class="sr-only" data-preview-audio playsinline>
+          <source src="<%= song.previewUrl %>" type="audio/mpeg" />
+          Your browser does not support the audio player.
+        </audio>
+        <button class="player-toggle" type="button" data-player-toggle>Play</button>
+        <div class="player-progress-wrap">
+          <input
+            class="player-progress"
+            type="range"
+            min="0"
+            max="30"
+            step="0.01"
+            value="0"
+            data-player-progress
+            aria-label="Preview progress"
+          />
+        </div>
+        <div class="player-times">
+          <span data-player-current>0:00</span>
+          <span data-player-duration>0:30</span>
+        </div>
+      </div>
+    <% } else { %>
+      <p class="no-preview minimal-note">This Deezer result does not include a preview clip.</p>
+    <% } %>
+
+    <div class="lyrics-scroll-panel">
+      <div class="lyrics-scroll-header">
+        <p class="preview-label">Lyrics</p>
+      </div>
+
+      <% if (displayLyrics) { %>
+        <pre class="lyrics-scroll-body"><%= displayLyrics %></pre>
+      <% } else { %>
+        <p class="minimal-note">Lyrics were not available for this track.</p>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<%- include("partials/footer") %>

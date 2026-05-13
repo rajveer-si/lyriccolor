@@ -1,0 +1,343 @@
+const genreNodes = [
+  {
+    slug: "dream-pop",
+    name: "Dream Pop",
+    cluster: "haze",
+    x: 18,
+    y: 18,
+    accent: "#8ec5ff",
+    aliases: ["ethereal pop", "floaty pop"],
+    vibes: ["dreamy", "soft focus", "weightless", "glossy", "night drive"],
+    blurb: "Airy melodies, blurred guitars, and romantic late-night glow.",
+    seedQueries: ['artist:"Beach House"', 'artist:"Cocteau Twins"'],
+    related: ["shoegaze", "bedroom-pop", "art-pop"]
+  },
+  {
+    slug: "shoegaze",
+    name: "Shoegaze",
+    cluster: "haze",
+    x: 28,
+    y: 11,
+    accent: "#99b3ff",
+    aliases: ["wall of sound"],
+    vibes: ["fuzzy", "loud", "hazy", "guitar wash", "immersive"],
+    blurb: "Huge guitar fog, buried vocals, and emotional overload.",
+    seedQueries: ['artist:"My Bloody Valentine"', 'artist:"Slowdive"'],
+    related: ["dream-pop", "slowcore", "post-punk-revival"]
+  },
+  {
+    slug: "slowcore",
+    name: "Slowcore",
+    cluster: "haze",
+    x: 40,
+    y: 18,
+    accent: "#c5b6ff",
+    aliases: ["sad indie"],
+    vibes: ["sparse", "quiet", "bleak", "slow", "intimate"],
+    blurb: "Low-temperature songs with space, tension, and bruised intimacy.",
+    seedQueries: ['artist:"Duster"', 'artist:"Low"'],
+    related: ["shoegaze", "indie-folk", "dream-pop"]
+  },
+  {
+    slug: "bedroom-pop",
+    name: "Bedroom Pop",
+    cluster: "haze",
+    x: 14,
+    y: 31,
+    accent: "#ffb7d5",
+    aliases: ["lo fi pop"],
+    vibes: ["cozy", "soft", "crush", "youthful", "home made"],
+    blurb: "Small-room hooks, diary energy, and plush lo-fi warmth.",
+    seedQueries: ['artist:"Clairo"', 'artist:"beabadoobee"'],
+    related: ["dream-pop", "indie-folk", "art-pop"]
+  },
+  {
+    slug: "indie-folk",
+    name: "Indie Folk",
+    cluster: "earth",
+    x: 25,
+    y: 42,
+    accent: "#e7c57b",
+    aliases: ["folk indie"],
+    vibes: ["woodsy", "campfire", "earnest", "road trip", "acoustic"],
+    blurb: "Warm strums, reflective writing, and weathered open-road feeling.",
+    seedQueries: ['artist:"Phoebe Bridgers"', 'artist:"Big Thief"'],
+    related: ["bedroom-pop", "alt-country", "slowcore"]
+  },
+  {
+    slug: "alt-country",
+    name: "Alt-Country",
+    cluster: "earth",
+    x: 39,
+    y: 48,
+    accent: "#d49a57",
+    aliases: ["americana", "roots rock"],
+    vibes: ["dusty", "barroom", "heartland", "twang", "sunset"],
+    blurb: "Twang, cracked storytelling, and motel-sign melancholy.",
+    seedQueries: ['artist:"Wilco"', 'artist:"Son Volt"'],
+    related: ["indie-folk", "psychedelic-soul", "jazz-rap"]
+  },
+  {
+    slug: "psychedelic-soul",
+    name: "Psychedelic Soul",
+    cluster: "earth",
+    x: 51,
+    y: 41,
+    accent: "#f29c60",
+    aliases: ["psych soul"],
+    vibes: ["warm", "analog", "swaying", "golden hour", "lush"],
+    blurb: "Soul grooves stretched with color, tape warmth, and haze.",
+    seedQueries: ['artist:"Khruangbin"', 'artist:"Black Pumas"'],
+    related: ["neo-soul", "alt-country", "art-pop"]
+  },
+  {
+    slug: "neo-soul",
+    name: "Neo-Soul",
+    cluster: "earth",
+    x: 63,
+    y: 33,
+    accent: "#f7b267",
+    aliases: ["modern soul"],
+    vibes: ["silky", "intimate", "midnight", "luxury", "buttery"],
+    blurb: "Velvet grooves, intimate vocals, and expensive-feeling warmth.",
+    seedQueries: ['artist:"Cleo Sol"', 'artist:"Erykah Badu"'],
+    related: ["psychedelic-soul", "jazz-rap", "trip-hop"]
+  },
+  {
+    slug: "jazz-rap",
+    name: "Jazz Rap",
+    cluster: "earth",
+    x: 76,
+    y: 24,
+    accent: "#ffd36b",
+    aliases: ["conscious rap"],
+    vibes: ["head nod", "smoky", "bookish", "cool", "crate digging"],
+    blurb: "Boom-bap drums with jazz samples, bite, and conversational cool.",
+    seedQueries: ['artist:"A Tribe Called Quest"', 'artist:"The Roots"'],
+    related: ["neo-soul", "trip-hop", "cloud-rap"]
+  },
+  {
+    slug: "trip-hop",
+    name: "Trip-Hop",
+    cluster: "midnight",
+    x: 83,
+    y: 38,
+    accent: "#8bb7a4",
+    aliases: ["downtempo noir"],
+    vibes: ["spy movie", "moody", "smoky", "seductive", "downtempo"],
+    blurb: "Noir beats, whispered vocals, and cinematic late-night drag.",
+    seedQueries: ['artist:"Massive Attack"', 'artist:"Portishead"'],
+    related: ["jazz-rap", "darkwave", "ambient-techno"]
+  },
+  {
+    slug: "city-pop",
+    name: "City Pop",
+    cluster: "neon",
+    x: 70,
+    y: 12,
+    accent: "#5de1d8",
+    aliases: ["japanese city pop"],
+    vibes: ["sunset skyline", "retro", "sleek", "convertible", "bright"],
+    blurb: "Glossy Japanese pop with yacht-club polish and night-city shine.",
+    seedQueries: ['artist:"Mariya Takeuchi"', 'artist:"Anri"'],
+    related: ["synthwave", "bossa-nova", "art-pop"]
+  },
+  {
+    slug: "bossa-nova",
+    name: "Bossa Nova",
+    cluster: "neon",
+    x: 58,
+    y: 9,
+    accent: "#7fe0a6",
+    aliases: ["brazilian lounge"],
+    vibes: ["breezy", "cafe", "coastal", "elegant", "sunlit"],
+    blurb: "Soft guitar sway, light percussion, and terrace-hour calm.",
+    seedQueries: ['artist:"João Gilberto"', 'artist:"Astrud Gilberto"'],
+    related: ["city-pop", "neo-soul", "afrobeat"]
+  },
+  {
+    slug: "afrobeat",
+    name: "Afrobeat",
+    cluster: "neon",
+    x: 86,
+    y: 54,
+    accent: "#89f067",
+    aliases: ["afrobeats", "west african groove"],
+    vibes: ["percussive", "sunny", "dance floor", "big rhythm", "joyful"],
+    blurb: "Big rolling percussion, hooky chants, and expansive groove.",
+    seedQueries: ['artist:"Burna Boy"', 'artist:"Wizkid"'],
+    related: ["baile-funk", "uk-garage", "neo-soul"]
+  },
+  {
+    slug: "baile-funk",
+    name: "Baile Funk",
+    cluster: "neon",
+    x: 72,
+    y: 61,
+    accent: "#c6ff62",
+    aliases: ["funk carioca"],
+    vibes: ["club", "percussive", "chaotic", "heat", "party"],
+    blurb: "Explosive Brazilian club energy with snapped drums and attitude.",
+    seedQueries: ['artist:"Anitta"', 'artist:"MC Fioti"'],
+    related: ["afrobeat", "uk-garage", "hyperpop"]
+  },
+  {
+    slug: "uk-garage",
+    name: "UK Garage",
+    cluster: "neon",
+    x: 57,
+    y: 67,
+    accent: "#6affc1",
+    aliases: ["2-step"],
+    vibes: ["shuffle", "sleek", "club dusk", "restless", "swing"],
+    blurb: "Skippy drums, glossy R&B ghosts, and tight city-night energy.",
+    seedQueries: ['artist:"Artful Dodger"', 'artist:"Burial"'],
+    related: ["drum-and-bass", "baile-funk", "ambient-techno"]
+  },
+  {
+    slug: "drum-and-bass",
+    name: "Drum & Bass",
+    cluster: "neon",
+    x: 45,
+    y: 73,
+    accent: "#61f0ff",
+    aliases: ["dnb", "liquid dnb"],
+    vibes: ["fast", "adrenaline", "night runner", "rave", "kinetic"],
+    blurb: "Rapid breaks, pressure, and motion-sick euphoria.",
+    seedQueries: ['artist:"Netsky"', 'artist:"Chase & Status"'],
+    related: ["uk-garage", "ambient-techno", "hyperpop"]
+  },
+  {
+    slug: "ambient-techno",
+    name: "Ambient Techno",
+    cluster: "neon",
+    x: 30,
+    y: 66,
+    accent: "#6fc2ff",
+    aliases: ["ambient electronic"],
+    vibes: ["meditative", "glacial", "late train", "spacey", "minimal"],
+    blurb: "Steady pulse wrapped in mist, drift, and afterhours calm.",
+    seedQueries: ['artist:"Boards of Canada"', 'artist:"The Orb"'],
+    related: ["drum-and-bass", "trip-hop", "synthwave"]
+  },
+  {
+    slug: "synthwave",
+    name: "Synthwave",
+    cluster: "midnight",
+    x: 44,
+    y: 7,
+    accent: "#ff86c8",
+    aliases: ["retrowave"],
+    vibes: ["neon", "arcade", "retro future", "outrun", "chrome"],
+    blurb: "Retro-futurist synth glow for highways, arcades, and rain.",
+    seedQueries: ['artist:"The Midnight"', 'artist:"Gunship"'],
+    related: ["city-pop", "darkwave", "ambient-techno"]
+  },
+  {
+    slug: "darkwave",
+    name: "Darkwave",
+    cluster: "midnight",
+    x: 92,
+    y: 19,
+    accent: "#9b8cff",
+    aliases: ["goth electronic"],
+    vibes: ["goth", "cold", "dramatic", "moonlit", "cathedral club"],
+    blurb: "Cold synths, romantic darkness, and elegant nocturnal drama.",
+    seedQueries: ['artist:"Molchat Doma"', 'artist:"Boy Harsher"'],
+    related: ["synthwave", "trip-hop", "post-punk-revival"]
+  },
+  {
+    slug: "hyperpop",
+    name: "Hyperpop",
+    cluster: "pulse",
+    x: 60,
+    y: 83,
+    accent: "#ff79db",
+    aliases: ["internet pop"],
+    vibes: ["maximal", "digital", "sugar rush", "glitch", "chaotic"],
+    blurb: "Compressed sugar, distortion, and emotionally overloaded pop.",
+    seedQueries: ['artist:"Charli xcx"', 'artist:"100 gecs"'],
+    related: ["pluggnb", "baile-funk", "art-pop"]
+  },
+  {
+    slug: "pluggnb",
+    name: "Pluggnb",
+    cluster: "pulse",
+    x: 48,
+    y: 89,
+    accent: "#ff90a4",
+    aliases: ["plug rnb"],
+    vibes: ["floaty trap", "youthful", "melodic", "sparkly", "internet sad"],
+    blurb: "Airy trap melodies and diaristic vocals with glossy haze.",
+    seedQueries: ['artist:"Summrs"', 'artist:"Autumn!"'],
+    related: ["hyperpop", "cloud-rap", "bedroom-pop"]
+  },
+  {
+    slug: "cloud-rap",
+    name: "Cloud Rap",
+    cluster: "pulse",
+    x: 34,
+    y: 86,
+    accent: "#b89cff",
+    aliases: ["float rap"],
+    vibes: ["detached", "misty", "trap haze", "aloof", "purple sky"],
+    blurb: "Weightless beats, narcotic melody, and floating rap cadences.",
+    seedQueries: ['artist:"Yung Lean"', 'artist:"Bladee"'],
+    related: ["pluggnb", "jazz-rap", "hyperpop"]
+  },
+  {
+    slug: "art-pop",
+    name: "Art Pop",
+    cluster: "pulse",
+    x: 8,
+    y: 54,
+    accent: "#ff9e8f",
+    aliases: ["avant pop"],
+    vibes: ["theatrical", "gloss", "dramatic", "gallery", "smart pop"],
+    blurb: "High-concept pop with shape-shifting arrangements and detail.",
+    seedQueries: ['artist:"Caroline Polachek"', 'artist:"FKA twigs"'],
+    related: ["dream-pop", "hyperpop", "psychedelic-soul"]
+  },
+  {
+    slug: "post-punk-revival",
+    name: "Post-Punk Revival",
+    cluster: "pulse",
+    x: 11,
+    y: 69,
+    accent: "#ff726b",
+    aliases: ["indie sleaze adjacent", "angular indie"],
+    vibes: ["angular", "urgent", "cool", "downtown", "restless"],
+    blurb: "Tight basslines, sharp guitars, and nicotine-night urgency.",
+    seedQueries: ['artist:"Interpol"', 'artist:"Editors"'],
+    related: ["indie-sleaze", "darkwave", "shoegaze"]
+  },
+  {
+    slug: "indie-sleaze",
+    name: "Indie Sleaze",
+    cluster: "pulse",
+    x: 21,
+    y: 81,
+    accent: "#ff8f58",
+    aliases: ["bloghouse era"],
+    vibes: ["messy", "flash photography", "cheap drinks", "electroclash", "2000s"],
+    blurb: "Dirty flash, blog-era cool, and dance-floor chaos with eyeliner.",
+    seedQueries: ['artist:"Yeah Yeah Yeahs"', 'artist:"The Rapture"'],
+    related: ["post-punk-revival", "hyperpop", "uk-garage"]
+  }
+];
+
+const genreMap = new Map(genreNodes.map((node) => [node.slug, node]));
+
+function getGenreNodes() {
+  return genreNodes;
+}
+
+function getGenreBySlug(slug) {
+  return genreMap.get(slug) || null;
+}
+
+module.exports = {
+  genreNodes,
+  getGenreNodes,
+  getGenreBySlug
+};

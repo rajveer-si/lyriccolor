@@ -1,0 +1,133 @@
+<%- include("partials/header", { pageTitle }) %>
+
+<section class="section-block discovery-results">
+  <div class="container">
+    <div class="results-topbar">
+      <div class="results-hero-copy">
+        <p class="eyebrow"><%= selectedGenre ? "Scene dive" : "Vibe match" %></p>
+        <h1>
+          <% if (selectedGenre) { %>
+            <%= selectedGenre.name %>
+          <% } else { %>
+            <%= query ? `Results for "${query}"` : "Discovery results" %>
+          <% } %>
+        </h1>
+        <p class="hero-text">
+          <% if (selectedGenre) { %>
+            <%= selectedGenre.blurb %>
+          <% } else { %>
+            These genre nodes are the closest fit for your description. Click around the map or play through the track grid below.
+          <% } %>
+        </p>
+      </div>
+
+      <form
+        class="vibe-form vibe-form-inline compact-vibe-form js-load-form"
+        action="/songs/search"
+        method="GET"
+        data-loading-message="Mapping your vibe..."
+      >
+        <label class="sr-only" for="results-q">Search again</label>
+        <textarea id="results-q" name="q" rows="1" placeholder="Shift the mood..." required><%= query %></textarea>
+        <button type="submit" data-loading-label="Mapping...">Remap</button>
+      </form>
+    </div>
+
+    <div class="discovery-layout">
+      <div class="discovery-map-panel">
+        <div class="panel-header">
+          <p class="preview-label">Genre network</p>
+          <p>Active nodes light up below. Every node is clickable.</p>
+        </div>
+        <%- include("partials/genre-network", { genreNodes, activeGenreSlugs, networkVariant: 'compact' }) %>
+      </div>
+
+      <div class="matched-panel">
+        <div class="panel-header">
+          <p class="preview-label">Closest genres</p>
+          <p>These nodes were selected from your text or from the scene you clicked.</p>
+        </div>
+
+        <div class="matched-grid">
+          <% matchedGenres.forEach((genre) => { %>
+            <a class="matched-card js-load-link" href="/songs/genre/<%= genre.slug %>" data-loading-message="Opening genre scene..." style="--genre-accent: <%= genre.accent %>;">
+              <p class="matched-name"><%= genre.name %></p>
+              <p class="matched-blurb"><%= genre.blurb %></p>
+              <p class="matched-reasons">
+                <%= genre.matchReasons && genre.matchReasons.length ? genre.matchReasons.join(" · ") : "editorial pick" %>
+              </p>
+            </a>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+
+    <% if (featuredArtists.length) { %>
+      <div class="artist-strip">
+        <div class="panel-header">
+          <p class="preview-label">Artists surfacing in this lane</p>
+        </div>
+        <div class="artist-pills">
+          <% featuredArtists.forEach((artist) => { %>
+            <div class="artist-pill">
+              <span><%= artist.name %></span>
+              <small><%= artist.appearances %> track<%= artist.appearances === 1 ? "" : "s" %></small>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (errorMessage) { %>
+      <div class="message-card">
+        <p><%= errorMessage %></p>
+      </div>
+    <% } %>
+
+    <div class="results-grid discovery-track-grid">
+      <% songs.forEach((song) => { %>
+        <article class="song-card discovery-song-card">
+          <img
+            class="album-cover"
+            src="<%= song.album.cover_big || song.album.cover_medium %>"
+            alt="Album cover for <%= song.album.title %>"
+          />
+          <div class="song-card-content">
+            <div>
+              <p class="song-title"><%= song.title %></p>
+              <p class="song-meta"><%= song.artist.name %></p>
+              <p class="song-meta muted"><%= song.album.title %></p>
+              <% if (song.discoverySource) { %>
+                <% const sourceGenre = matchedGenres.find((genre) => genre.slug === song.discoverySource); %>
+                <p class="track-source"><%= sourceGenre ? sourceGenre.name : song.discoverySource %></p>
+              <% } %>
+            </div>
+
+            <% if (song.preview) { %>
+              <audio controls preload="none" class="audio-player">
+                <source src="<%= song.preview %>" type="audio/mpeg" />
+                Your browser does not support the audio player.
+              </audio>
+            <% } else { %>
+              <p class="no-preview">Preview unavailable for this song.</p>
+            <% } %>
+
+            <form action="/songs/save" method="POST" class="save-form js-load-form" data-loading-message="Saving this discovery...">
+              <input type="hidden" name="title" value="<%= song.title %>" />
+              <input type="hidden" name="artist" value="<%= song.artist.name %>" />
+              <input type="hidden" name="album" value="<%= song.album.title %>" />
+              <input type="hidden" name="albumCover" value="<%= song.album.cover_big || song.album.cover_medium %>" />
+              <input type="hidden" name="previewUrl" value="<%= song.preview || '' %>" />
+              <input type="hidden" name="deezerId" value="<%= song.id %>" />
+              <input type="hidden" name="discoveryGenres" value="<%= matchedGenres.map((genre) => genre.slug).join(',') %>" />
+              <input type="hidden" name="sourceQuery" value="<%= selectedGenre ? selectedGenre.name : query %>" />
+              <button type="submit" data-loading-label="Saving...">Save Track</button>
+            </form>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<%- include("partials/footer") %>

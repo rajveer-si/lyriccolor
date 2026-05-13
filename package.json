@@ -1,0 +1,29 @@
+{
+  "name": "lyriccolor",
+  "version": "1.0.0",
+  "description": "LyricColor is an Express and MongoDB app for searching songs, previewing Deezer tracks, and saving LRCLIB lyrics with album-inspired colors.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "express",
+    "mongoose",
+    "ejs",
+    "deezer",
+    "lrclib"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "mongoose": "^8.19.1",
+    "node-vibrant": "^4.0.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

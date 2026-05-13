@@ -1,0 +1,37 @@
+<%- include("partials/header", { pageTitle }) %>
+
+<section class="section-block">
+  <div class="container">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Discovery vault</p>
+        <h1>Saved tracks</h1>
+      </div>
+      <a class="saved-link" href="/">Back to discovery map</a>
+    </div>
+
+    <% if (!songs.length) { %>
+      <div class="message-card">
+        <p>No tracks have been saved yet. Explore the map, play previews, and save anything worth revisiting.</p>
+      </div>
+    <% } %>
+
+    <div class="saved-grid">
+      <% songs.forEach((song) => { %>
+        <a class="saved-card js-load-link" href="/songs/<%= song._id %>" data-loading-message="Opening song view...">
+          <img class="saved-cover" src="<%= song.albumCover %>" alt="Album cover for <%= song.album %>" />
+          <div class="saved-card-content">
+            <p class="song-title"><%= song.title %></p>
+            <p class="song-meta"><%= song.artist %></p>
+            <p class="song-meta muted"><%= song.album %></p>
+            <% if (song.discoveryGenres && song.discoveryGenres.length) { %>
+              <p class="track-source"><%= song.discoveryGenres.slice(0, 2).join(" · ") %></p>
+            <% } %>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+</section>
+
+<%- include("partials/footer") %>
